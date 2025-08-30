@@ -35,7 +35,7 @@ const Welcome = () => {
                         title="Get Started"
                         buttonStyle={{marginHorizontal: wp(2), marginTop: wp(10)}}
                        // textStyle={{color: 'red', fontWeight: 'bold'}}
-                        onPress={() => router.push('/singUp') }
+                        onPress={() => router.push('/signUp') }
 
                     />
 

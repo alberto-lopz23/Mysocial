@@ -1,4 +1,4 @@
-import { StyleSheet, Text, Pressable, View } from 'react-native'
+import { StyleSheet, Text, View, Pressable } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import ScreenWrapper from '../components/ScreenWrapper'
 import BackButtom from '../components/BackButtom'
@@ -11,11 +11,12 @@ import Icon from '../assets/icons'
 import Buttom from '../components/Button'
 
 // Firebase
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
+import { createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebaseConfig'
 
-const Login = () => {
+const SignUp = () => {
   const router = useRouter()
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -23,27 +24,37 @@ const Login = () => {
   // Revisar si ya hay usuario logueado
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) router.replace('/home') // manda directo al home
+      if (user) router.replace('/home')
     })
-
     return () => unsubscribe()
   }, [])
 
-  const onSubmit = async () => {
-    if (!email || !password) {
-      alert("Por favor, completa los campos")
+  const onRegister = async () => {
+    if (!username || !email || !password) {
+      alert("Por favor, llena todos los campos")
       return
     }
 
     setLoading(true)
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      console.log("Usuario logueado:", userCredential.user)
-      alert("Login exitoso!")
-      router.replace('/home') // evita volver atrás al login
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      // actualizar perfil con el username
+      await updateProfile(user, { displayName: username })
+
+      console.log("Usuario registrado:", user)
+      alert("¡Registro exitoso!")
+      router.replace('/home') // manda al home y evita volver atrás al registro
     } catch (error) {
-      console.error("Error al iniciar sesión:", error.message)
-      alert("Error: " + error.message)
+      console.error("Error al registrar:", error.message)
+
+      // Manejar caso de email ya registrado
+      if (error.code === "auth/email-already-in-use") {
+        alert("Este email ya está registrado. Intenta iniciar sesión.")
+      } else {
+        alert("Error: " + error.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -55,12 +66,20 @@ const Login = () => {
       <View style={styles.container}>
         <BackButtom router={router} />
 
+        {/* welcome */}
         <View style={styles.welcome}>
           <Text style={styles.welcomeText}>Hey,</Text>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
+          <Text style={styles.welcomeText}>Welcome</Text>
         </View>
 
+        {/* form */}
         <View style={styles.form}>
+          <Input 
+            icon={<Icon name="iconUser" size={26} />}
+            placeholder='Username'
+            value={username}
+            onChangeText={setUsername}
+          />
           <Input
             icon={<Icon name="iconMail" size={26} />}
             placeholder='Email'
@@ -74,17 +93,15 @@ const Login = () => {
             value={password}
             onChangeText={setPassword}
           />
-
-          <Text style={styles.forgotPassword}>Forgot Password?</Text>
-
-          <Buttom title={'Login'} loading={loading} onPress={onSubmit} />
+          <Buttom title={'Register'} loading={loading} onPress={onRegister}/>
         </View>
 
+        {/* footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
-          <Pressable onPress={() => router.push('/signUp')}>
-            <Text style={[styles.signUpText, { color: theme.Colors.primary, fontWeight: theme.font.bold }]}>
-              Register
+          <Text style={styles.footerText}>Have account?</Text>
+          <Pressable onPress={() => router.push('/login')}>
+            <Text style={[styles.singUpText, { color: theme.Colors.primary, fontWeight: theme.font.bold }]}>
+              Login
             </Text>
           </Pressable>
         </View>
@@ -93,18 +110,16 @@ const Login = () => {
   )
 }
 
-export default Login
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1, 
     paddingHorizontal: wp(5),
-    paddingTop: hp(8),
+    paddingTop: hp(8), 
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
   welcome: {
-    marginBottom: hp(5),
+    marginBottom: hp(5), 
   },
   welcomeText: {
     color: theme.Colors.text,
@@ -113,18 +128,12 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   form: {
-    width: '100%',
+    width: '100%', 
     gap: 20,
     marginBottom: hp(5),
   },
-  forgotPassword: {
-    color: theme.Colors.text,
-    fontSize: hp(2),
-    textAlign: 'right',
-    marginTop: 5,
-  },
   footer: {
-    flexDirection: 'column',
+    flexDirection: 'column', 
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
@@ -134,9 +143,11 @@ const styles = StyleSheet.create({
     color: theme.Colors.text,
     fontSize: hp(2.5),
   },
-  signUpText: {
+  singUpText: {
     textAlign: 'center',
     color: theme.Colors.text,
     fontSize: hp(4),
   },
 })
+
+export default SignUp

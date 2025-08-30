@@ -11,7 +11,7 @@ const Input = (props) => {
         props.icon && props.icon
       }
       <TextInput 
-        style={{flex: 1}}
+        style={{flex: 1, color: theme.Colors.text,  ...props.style}}
         placeholderTextColor={props.placeholderTextColor}
         ref={props.inputRef && props.inputRef}
         {...props}
@@ -27,12 +27,18 @@ const styles = StyleSheet.create({
     container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: wp(8),
+    gap: 15,
+    height: wp(12),
     borderWidth: 0.8,
     borderColor: theme.Colors.text,
     borderCurve: theme.radius.xxl,
     paddingHorizontal: 18,
-    gap: 12
+    },
+    textInput: {
+      flex: 1,
+      color: theme.Colors.text,
+      fontSize: wp(4),
+      fontFamily: theme.font.regular,
+
     }
 })

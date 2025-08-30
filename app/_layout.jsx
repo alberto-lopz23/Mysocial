@@ -1,15 +1,21 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { Stack } from 'expo-router'
+import { View } from "react-native";
+import React from "react";
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SecretsProvider } from "../context/secretsContext"; // importa tu context
 
 const _layout = () => {
   return (
-    <Stack 
-    screenOptions={{
-        headerShown: false,
-    }}
-    />
-  )
-}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SecretsProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        />
+      </SecretsProvider>
+    </GestureHandlerRootView>
+  );
+};
 
-export default _layout
+export default _layout;
