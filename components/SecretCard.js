@@ -97,40 +97,58 @@ const SecretCard = React.memo(({ secret, userId }) => {
     return status === "granted";
   };
 
-  // Compartir secreto como imagen
-  const shareImage = async () => {
-    try {
-      const hasPermission = await getPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          "Permiso requerido",
-          "Necesitas conceder permisos para acceder a la galería y poder compartir."
-        );
-        return;
-      }
+  //   // Compartir secreto como imagen
+  // const shareImage = async () => {
+  //   try {
+  //     const hasPermission = await getPermission();
+  //     if (!hasPermission) {
+  //       Alert.alert(
+  //         "Permiso requerido",
+  //         "Necesitas conceder permisos para acceder a la galería y poder compartir."
+  //       );
+  //       return;
+  //     }
 
-      const uri = await viewShotRef.current.capture();
-      const asset = await MediaLibrary.createAssetAsync(uri);
+  //     // Captura la imagen del secreto
+  //     const uri = await viewShotRef.current.capture();
+  //     const asset = await MediaLibrary.createAssetAsync(uri);
 
-      if (asset) {
-        await Share.share({
-          message:
-            Platform.OS === "android"
-              ? "Mira este secreto 👀 " + asset.uri
-              : "Mira este secreto 👀",
-          url: Platform.OS === "ios" ? asset.uri : undefined,
-        });
-      } else {
-        Alert.alert("Error", "No se pudo preparar la imagen para compartir.");
-      }
-    } catch (error) {
-      console.error("Error al compartir:", error);
-      Alert.alert(
-        "Error",
-        "Hubo un problema al intentar compartir el secreto. Por favor, inténtalo de nuevo."
-      );
-    }
-  };
+  //     if (!asset) {
+  //       Alert.alert("Error", "No se pudo preparar la imagen para compartir.");
+  //       return;
+  //     }
+
+  //     // Compartir según la plataforma
+  //     if (Platform.OS === "android") {
+  //       // Android solo acepta 'message'
+  //       await Share.share({
+  //         message: `Mira este secreto 👀 ${asset.uri}`,
+  //       });
+  //     } else {
+  //       // iOS acepta 'message' y 'url'
+  //       await Share.share({
+  //         message: "Mira este secreto 👀",
+  //         url: asset.uri,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error al compartir:", error);
+  //     Alert.alert(
+  //       "Error",
+  //       "Hubo un problema al intentar compartir el secreto. Por favor, inténtalo de nuevo."
+  //     );
+  //   }
+  // };
+
+
+    
+    const time = setTimeout()
+
+    // Set a timer for 1 hour (3600000 ms)
+    setTimeout(() => {
+      Alert.alert("¡Hora de tomar un descanso!", "Han pasado 1 hora. Recuerda descansar.");
+    }, 3600000);
+    clearTimeout(time);
 
   return (
     <View style={styles.cardContainer}>
@@ -153,91 +171,93 @@ const SecretCard = React.memo(({ secret, userId }) => {
               </TouchableOpacity>
             ))}
           </View>
+          <TouchableOpacity
+            style={{ marginTop: 10 }}
+            onPress={() => setShowComments(!showComments)}
+          >
+            <Text>💬 {comments.length}</Text>
+          </TouchableOpacity>
+
+          {/* Comentarios */}
+
+          {showComments && (
+            <View style={styles.commentsSection}>
+              {comments.map((c) => (
+                <View key={c.id} style={{ marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14 }}>
+                    {c.user}: {c.text}
+                  </Text>
+
+                  {c.replies &&
+                    c.replies.map((r) => (
+                      <Text
+                        key={r.id}
+                        style={{ fontSize: 13, marginLeft: 15, color: "#555" }}
+                      >
+                        {r.user}: {r.text}
+                      </Text>
+                    ))}
+
+                  <TouchableOpacity
+                    style={{ marginLeft: 10, marginTop: 3 }}
+                    onPress={() =>
+                      setShowReplyInput((prev) => ({
+                        ...prev,
+                        [c.id]: !prev[c.id],
+                      }))
+                    }
+                  >
+                    <Text style={{ color: "#007bff" }}>💬 Responder</Text>
+                  </TouchableOpacity>
+
+                  {showReplyInput[c.id] && (
+                    <View style={{ flexDirection: "row", marginTop: 5 }}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Escribe tu respuesta..."
+                        value={replyText[c.id] || ""}
+                        onChangeText={(text) =>
+                          setReplyText((prev) => ({ ...prev, [c.id]: text }))
+                        }
+                      />
+                      <TouchableOpacity
+                        onPress={() => handleAddReply(c.id)}
+                        style={{ marginLeft: 5 }}
+                      >
+                        <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                          Enviar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              ))}
+
+              <View style={{ flexDirection: "row", marginTop: 5 }}>
+                <TextInput
+                  style={styles.input}
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  placeholder="Escribe un comentario..."
+                />
+                <TouchableOpacity
+                  onPress={handleAddComment}
+                  style={{ marginLeft: 5 }}
+                >
+                  <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                    Enviar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       </ViewShot>
 
       {/* Botón de compartir */}
-      <TouchableOpacity style={styles.shareButton} onPress={shareImage}>
+      {/* <TouchableOpacity style={styles.shareButton} onPress={shareImage}>
         <Text style={styles.shareButtonText}>📸 Compartir secreto</Text>
-      </TouchableOpacity>
-
-      {/* Comentarios */}
-      <TouchableOpacity
-        style={{ marginTop: 10 }}
-        onPress={() => setShowComments(!showComments)}
-      >
-        <Text>💬 {comments.length}</Text>
-      </TouchableOpacity>
-
-      {showComments && (
-        <View style={styles.commentsSection}>
-          {comments.map((c) => (
-            <View key={c.id} style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 14 }}>
-                {c.user}: {c.text}
-              </Text>
-
-              {c.replies &&
-                c.replies.map((r) => (
-                  <Text
-                    key={r.id}
-                    style={{ fontSize: 13, marginLeft: 15, color: "#555" }}
-                  >
-                    {r.user}: {r.text}
-                  </Text>
-                ))}
-
-              <TouchableOpacity
-                style={{ marginLeft: 10, marginTop: 3 }}
-                onPress={() =>
-                  setShowReplyInput((prev) => ({
-                    ...prev,
-                    [c.id]: !prev[c.id],
-                  }))
-                }
-              >
-                <Text style={{ color: "#007bff" }}>💬 Responder</Text>
-              </TouchableOpacity>
-
-              {showReplyInput[c.id] && (
-                <View style={{ flexDirection: "row", marginTop: 5 }}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Escribe tu respuesta..."
-                    value={replyText[c.id] || ""}
-                    onChangeText={(text) =>
-                      setReplyText((prev) => ({ ...prev, [c.id]: text }))
-                    }
-                  />
-                  <TouchableOpacity
-                    onPress={() => handleAddReply(c.id)}
-                    style={{ marginLeft: 5 }}
-                  >
-                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-                      Enviar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          ))}
-
-          <View style={{ flexDirection: "row", marginTop: 5 }}>
-            <TextInput
-              style={styles.input}
-              value={newComment}
-              onChangeText={setNewComment}
-              placeholder="Escribe un comentario..."
-            />
-            <TouchableOpacity
-              onPress={handleAddComment}
-              style={{ marginLeft: 5 }}
-            >
-              <Text style={{ fontWeight: "bold", fontSize: 16 }}>Enviar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      </TouchableOpacity> */}
     </View>
   );
 });

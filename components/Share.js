@@ -6,40 +6,7 @@ import * as MediaLibrary from "expo-media-library";
 const SecretCardShare = ({ secret }) => {
   const viewShotRef = useRef();
 
-  const shareImage = async () => {
-  try {
-    // 1. Solicitar permisos de Media Library
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permiso Requerido",
-        "Necesitamos permiso para acceder a tu galería para poder compartir la imagen."
-      );
-      return;
-    }
 
-    // 2. Capturar la vista como una URI de archivo
-    const uri = await viewShotRef.current.capture();
-
-    // 3. Guardar el archivo capturado en la galería del dispositivo
-    const asset = await MediaLibrary.createAssetAsync(uri);
-    
-    // 4. Verificar que se creó el asset
-    if (asset) {
-      // 5. Compartir la imagen usando solo la URL del asset
-      const shareOptions = {
-        url: asset.uri,
-      };
-      await Share.share(shareOptions);
-    } else {
-      Alert.alert("Error", "No se pudo preparar la imagen para compartir.");
-    }
-
-  } catch (error) {
-    console.log("Error al compartir:", error);
-    Alert.alert("Error", "Ocurrió un error al intentar compartir el secreto.");
-  }
-};
 
   return (
     <View>
