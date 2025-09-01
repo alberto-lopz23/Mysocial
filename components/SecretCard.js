@@ -4,11 +4,15 @@ import {
   View,
   StyleSheet,
   Text,
+  Platform,
+  Alert, // ¡Importa Alert!
 } from "react-native";
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebaseConfig";
 import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { Share } from "react-native";
+import ViewShot from "react-native-view-shot";
+import * as MediaLibrary from "expo-media-library";
 
 const emojis = { like: "💙", love: "❤️", laugh: "😂", wow: "😮", sad: "😢" };
 
@@ -20,6 +24,8 @@ const SecretCard = React.memo(({ secret, userId }) => {
   const [reactions, setReactions] = useState(secret.reactions || []);
   const [showComments, setShowComments] = useState(false);
 
+  const viewShotRef = useRef();
+
   // Lazy load de comentarios
   useEffect(() => {
     if (showComments && comments.length === 0) {
@@ -29,7 +35,7 @@ const SecretCard = React.memo(({ secret, userId }) => {
         }
       });
     }
-  }, [showComments]);
+  }, [showComments, comments.length, secret.id]);
 
   const countReactions = (type) =>
     reactions.filter((r) => r.type === type).length;
@@ -40,7 +46,6 @@ const SecretCard = React.memo(({ secret, userId }) => {
 
     let newReactions = [...reactions];
     if (userReaction && userReaction.type === reactionType) {
-      // quitar reacción
       newReactions = newReactions.filter((r) => r.userId !== userId);
     } else {
       newReactions = newReactions.filter((r) => r.userId !== userId);
@@ -86,25 +91,77 @@ const SecretCard = React.memo(({ secret, userId }) => {
     setShowReplyInput((prev) => ({ ...prev, [commentId]: false }));
   };
 
+  // Función para solicitar permisos, ¡esta es la pieza que faltaba!
+  const getPermission = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    return status === "granted";
+  };
+
+  // Compartir secreto como imagen
+  const shareImage = async () => {
+    try {
+      const hasPermission = await getPermission();
+      if (!hasPermission) {
+        Alert.alert(
+          "Permiso requerido",
+          "Necesitas conceder permisos para acceder a la galería y poder compartir."
+        );
+        return;
+      }
+
+      const uri = await viewShotRef.current.capture();
+      const asset = await MediaLibrary.createAssetAsync(uri);
+
+      if (asset) {
+        await Share.share({
+          message:
+            Platform.OS === "android"
+              ? "Mira este secreto 👀 " + asset.uri
+              : "Mira este secreto 👀",
+          url: Platform.OS === "ios" ? asset.uri : undefined,
+        });
+      } else {
+        Alert.alert("Error", "No se pudo preparar la imagen para compartir.");
+      }
+    } catch (error) {
+      console.error("Error al compartir:", error);
+      Alert.alert(
+        "Error",
+        "Hubo un problema al intentar compartir el secreto. Por favor, inténtalo de nuevo."
+      );
+    }
+  };
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.dateText}>
-        {secret.createdAt
-          ? new Date(secret.createdAt.seconds * 1000).toLocaleString()
-          : ""}
-      </Text>
-      <Text style={styles.secretText}>{secret.text}</Text>
+    <View style={styles.cardContainer}>
+      {/* Envuelve la card en ViewShot */}
+      <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }}>
+        <View style={styles.card}>
+          <Text style={styles.dateText}>
+            {secret.createdAt
+              ? new Date(secret.createdAt.seconds * 1000).toLocaleString()
+              : ""}
+          </Text>
+          <Text style={styles.secretText}>{secret.text}</Text>
 
-      <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-        {Object.keys(emojis).map((type) => (
-          <TouchableOpacity key={type} onPress={() => handleReaction(type)}>
-            <Text>
-              {emojis[type]} {countReactions(type)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+            {Object.keys(emojis).map((type) => (
+              <TouchableOpacity key={type} onPress={() => handleReaction(type)}>
+                <Text>
+                  {emojis[type]} {countReactions(type)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ViewShot>
 
+      {/* Botón de compartir */}
+      <TouchableOpacity style={styles.shareButton} onPress={shareImage}>
+        <Text style={styles.shareButtonText}>📸 Compartir secreto</Text>
+      </TouchableOpacity>
+
+      {/* Comentarios */}
       <TouchableOpacity
         style={{ marginTop: 10 }}
         onPress={() => setShowComments(!showComments)}
@@ -186,11 +243,14 @@ const SecretCard = React.memo(({ secret, userId }) => {
 });
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    marginBottom: 12,
+  },
   card: {
-    backgroundColor: "#d4d3d3ff",
+    backgroundColor: "#fdfdfd",
     padding: 12,
     borderRadius: 12,
-    marginBottom: 12,
+    elevation: 3,
   },
   secretText: { fontSize: 16, marginBottom: 5 },
   dateText: {
@@ -218,6 +278,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     height: 35,
+  },
+  shareButton: {
+    backgroundColor: "#ff0066",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginTop: 8,
+  },
+  shareButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
 
