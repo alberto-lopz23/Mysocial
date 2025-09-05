@@ -140,16 +140,6 @@ const SecretCard = React.memo(({ secret, userId }) => {
   //   }
   // };
 
-
-    
-    const time = setTimeout()
-
-    // Set a timer for 1 hour (3600000 ms)
-    setTimeout(() => {
-      Alert.alert("¡Hora de tomar un descanso!", "Han pasado 1 hora. Recuerda descansar.");
-    }, 3600000);
-    clearTimeout(time);
-
   return (
     <View style={styles.cardContainer}>
       {/* Envuelve la card en ViewShot */}
