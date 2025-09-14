@@ -4,19 +4,23 @@ import {
   View,
   FlatList,
   Switch,
-  ActivityIndicator,
+  Pressable,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import ScreenWrapper from "../components/ScreenWrapper";
 import { StatusBar } from "expo-status-bar";
 import SecretCard from "../components/SecretCard";
 import FooterNav from "../components/FooterNav";
 import { SecretsContext } from "../context/secretsContext";
-
+import { router } from "expo-router";
+import { getAuth } from "firebase/auth";
 export default function Home() {
   const { secrets } = useContext(SecretsContext);
   const [showExpiringOnly, setShowExpiringOnly] = useState(false);
-  const userId = "user123";
+const auth = getAuth();
+const user = auth.currentUser;
+
+const userId = user ? user.uid : "guest";
 
   const filteredSecrets = secrets
     .filter((secret) => {
@@ -35,6 +39,13 @@ export default function Home() {
       <StatusBar style="dark" />
       <View style={styles.container}>
         <Text style={styles.title}>Secretos</Text>
+        
+        <Pressable onPress={() => router.push("/groups/groupsScreen")}>
+          <Text style={{ color: "#007AFF", marginBottom: 10 }}>
+            Ver mis grupos
+          </Text>
+        </Pressable>
+        
 
         <View
           style={{

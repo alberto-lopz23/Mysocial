@@ -14,7 +14,6 @@ const FooterNav = () => {
     { name: "Home", icon: "home-outline", route: "/home" },
     { name: "Write", icon: "add-circle-outline", route: "/write" },
     { name: "ChatRandom", icon: "person-outline", route: "/chatRandom" },
-    { name: "Ranking", icon: "trophy-outline", route: "/ranking" },
   ];
 
   return (
